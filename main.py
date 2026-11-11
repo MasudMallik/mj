@@ -2,7 +2,8 @@ import streamlit as st
 from datetime import datetime
 from pathlib import Path
 import base64
-
+import io
+from PIL import Image, ImageOps
 # ---------------------------------------------------------
 # MUJAHID'S BIRTHDAY WEBSITE
 # Add your photos inside the "images" folder and update
@@ -23,6 +24,15 @@ PHOTO_FILES = [
     "images/mujahid3.jpg",
     "images/mujahid4.jpg",
 ]
+@st.cache_data(show_spinner=False)
+def image_to_base64(path, max_side=900):
+    """Fix rotation, shrink and compress so every photo loads fast and looks right."""
+    img = Image.open(path)
+    img = ImageOps.exif_transpose(img).convert("RGB")
+    img.thumbnail((max_side, max_side))
+    buf = io.BytesIO()
+    img.save(buf, format="JPEG", quality=85)
+    return base64.b64encode(buf.getvalue()).decode()
 
 # Birthday date: 14 November (automatically chooses the next occurrence)
 today = datetime.now().date()
@@ -75,11 +85,31 @@ h1,h2,h3 {font-family:'Playfair Display',serif !important;}
 }
 .section-title {text-align:center; font-size:2.1rem; margin:2.6rem 0 1.1rem;}
 .muted {color:#c9bfdc; text-align:center;}
-.photo-card {
-    background:rgba(255,255,255,.07); border:1px solid rgba(255,255,255,.12);
-    padding:12px; border-radius:20px; height:100%;
+.gallery {
+    display:flex; gap:18px; overflow-x:auto; padding:10px 4px 20px;
+    scroll-snap-type:x mandatory; -webkit-overflow-scrolling:touch;
 }
-.photo-card img {border-radius:14px; object-fit:cover;}
+.gallery::-webkit-scrollbar {height:8px;}
+.gallery::-webkit-scrollbar-track {background:rgba(255,255,255,.06); border-radius:99px;}
+.gallery::-webkit-scrollbar-thumb {background:linear-gradient(90deg,#ffd479,#ff9cbd); border-radius:99px;}
+.gallery-item {
+    flex:0 0 min(300px, 78vw); height:400px; position:relative;
+    scroll-snap-align:center; border-radius:20px; overflow:hidden;
+    border:1px solid rgba(255,255,255,.15);
+    box-shadow:0 12px 35px rgba(0,0,0,.3);
+    transition:transform .25s;
+}
+.gallery-item:hover {transform:translateY(-6px);}
+.gallery-item img {
+    width:100%; height:100%; display:block;
+    object-fit:cover; object-position:center top;
+}
+.gallery-caption {
+    position:absolute; left:0; right:0; bottom:0; padding:28px 12px 12px;
+    text-align:center; color:#fff; font-weight:600;
+    background:linear-gradient(to top, rgba(16,13,34,.85), transparent);
+}
+.scroll-hint {text-align:center; color:#a99dbd; font-size:.85rem; margin-top:-6px;}
 .message {
     padding:28px; border-radius:22px; text-align:center;
     background:linear-gradient(135deg,rgba(255,117,168,.14),rgba(167,139,250,.13));
@@ -160,16 +190,19 @@ st.markdown('<p class="muted">Some moments, some smiles, and memories worth keep
 
 existing_photos = [Path(p) for p in PHOTO_FILES if Path(p).is_file()]
 if existing_photos:
-    cols = st.columns(2)
+    items = ""
     for index, photo in enumerate(existing_photos):
-        with cols[index % 2]:
-            st.markdown('<div class="photo-card">', unsafe_allow_html=True)
-            st.image(str(photo), use_container_width=True)
-            st.markdown(f'<p style="text-align:center;color:#e8dff5;margin:8px 0 2px;">Memory #{index + 1} 💜</p>', unsafe_allow_html=True)
-            st.markdown('</div>', unsafe_allow_html=True)
+        b64 = image_to_base64(str(photo))
+        items += (
+            f'<div class="gallery-item">'
+            f'<img src="data:image/jpeg;base64,{b64}" alt="Memory {index + 1}">'
+            f'<div class="gallery-caption">Memory #{index + 1} 💜</div>'
+            f'</div>'
+        )
+    st.markdown(f'<div class="gallery">{items}</div>', unsafe_allow_html=True)
+    st.markdown('<p class="scroll-hint">← swipe or scroll sideways for more →</p>', unsafe_allow_html=True)
 else:
     st.info("Add Mujahid's photos to the images folder. The gallery will display them here automatically.")
-
 # ----------------------- BIRTHDAY MESSAGE -------------------
 st.markdown('<h2 class="section-title">A Message For You 💌</h2>', unsafe_allow_html=True)
 st.markdown("""
