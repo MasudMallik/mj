@@ -18,12 +18,18 @@ st.set_page_config(
 )
 
 # >>> CHANGE THESE IMAGE PATHS TO YOUR OWN PHOTOS <<<
-PHOTO_FILES = [
-    "images/mujahid1.jpg",
-    "images/mujahid2.jpg",
-    "images/mujahid3.jpg",
-    "images/mujahid4.jpg",
-]
+PHOTO_FILES=[]
+for i in range(1,46):
+    file_name=f"images/mujahid{i}.jpeg"
+    PHOTO_FILES.append(file_name)
+    file_name=""
+# PHOTO_FILES = [
+#     "images/mujahid1.jpg",
+#     "images/mujahid2.jpg",
+#     "images/mujahid3.jpg",
+#     "images/mujahid4.jpg",
+# ]
+print(PHOTO_FILES)
 @st.cache_data(show_spinner=False)
 def image_to_base64(path, max_side=900):
     """Fix rotation, shrink and compress so every photo loads fast and looks right."""
@@ -93,16 +99,17 @@ h1,h2,h3 {font-family:'Playfair Display',serif !important;}
 .gallery::-webkit-scrollbar-track {background:rgba(255,255,255,.06); border-radius:99px;}
 .gallery::-webkit-scrollbar-thumb {background:linear-gradient(90deg,#ffd479,#ff9cbd); border-radius:99px;}
 .gallery-item {
-    flex:0 0 min(300px, 78vw); height:400px; position:relative;
+    flex:0 0 auto; height:420px; position:relative;
     scroll-snap-align:center; border-radius:20px; overflow:hidden;
     border:1px solid rgba(255,255,255,.15);
     box-shadow:0 12px 35px rgba(0,0,0,.3);
     transition:transform .25s;
+    background:rgba(255,255,255,.05);
 }
 .gallery-item:hover {transform:translateY(-6px);}
 .gallery-item img {
-    width:100%; height:100%; display:block;
-    object-fit:cover; object-position:center top;
+    height:100%; width:auto; max-width:85vw; display:block;
+    object-fit:contain;
 }
 .gallery-caption {
     position:absolute; left:0; right:0; bottom:0; padding:28px 12px 12px;
